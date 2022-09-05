@@ -1,0 +1,41 @@
+version: "2"
+
+volumes:
+  postgres: {}
+
+services:
+  db:
+    image: postgres:14
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_DB: "blockscout"
+    env_file:
+      - auth.env
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  blockscout:
+    depends_on:
+      - db
+    image: ghcr.io/0xe3b0c4/blockscout:dev
+    ports:
+      - "4000:4000"
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+    command: [ "/bin/bash", "-c", "chmod +x /build.sh; while true; do sleep 30; done;" ]
+    env_file:
+      - common-blockscout.env
+    volumes:
+      - ./blockscout:/app
+      - ./build.sh:/build.sh
+      - ./genesis.json:/data/genesis.json:ro
